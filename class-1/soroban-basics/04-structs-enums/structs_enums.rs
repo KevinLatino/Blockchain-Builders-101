@@ -5,6 +5,21 @@
 // ═══════════════════════════════════════════════════════════════════════════
 use soroban_sdk::{contracttype, Address, String};
 
+// ── #[derive(...)] ──────────────────────────────────────────────────────────
+// Macro de Rust (no de Soroban) que le agrega "habilidades" automáticas a un tipo:
+//
+//   Clone      → se puede duplicar con .clone()
+//   Copy       → se duplica solo al asignarlo (solo para tipos chicos: números, enums numéricos)
+//   Debug      → se puede imprimir para depurar ({:?}); los tests lo necesitan para mostrar errores
+//   PartialEq  → se puede comparar con ==   (lo usa assert_eq! en los tests)
+//   Eq         → la comparación == es "total" (complemento de PartialEq)
+//   PartialOrd → se puede comparar con <, >, <=, >=
+//   Ord        → orden "total": permite ordenar y usar max/min
+//
+// Regla práctica: Clone, Debug, Eq y PartialEq casi siempre. Copy, PartialOrd y
+// Ord solo si los necesitás (ej: enums numéricos y #[contracterror]).
+// ────────────────────────────────────────────────────────────────────────────
+
 // STRUCT → una "ficha" con varios campos
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
