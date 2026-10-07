@@ -10,8 +10,8 @@ Para escribir smart contracts en Stellar (Soroban) necesitás 3 cosas:
 
 ## 🎥 Video tutorial
 
-- macOS: _link pendiente_
-- Windows: _link pendiente_
+- 🍎 [Instalación en macOS](https://drive.google.com/file/d/1EvKA0syfmMqGWj0lniBcVEg9sb3QNDsg/view)
+- 🪟 [Instalación en Windows](https://drive.google.com/file/d/1QObL-IdAJNZM6dpMMDzvq-NtNizLiXEb/view)
 
 ---
 
