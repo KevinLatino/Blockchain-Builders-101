@@ -1,0 +1,32 @@
+{
+  "name": "token-dapp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "bindings": "stellar contract bindings typescript --network testnet --contract-id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC --output-dir packages/xlm-token --overwrite && cd packages/xlm-token && npm pkg set name=xlm-token exports=./src/index.ts typings=./src/index.ts dependencies.@stellar/stellar-sdk=^17.2.1 && npm pkg delete scripts devDependencies",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@creit.tech/stellar-wallets-kit": "^2.7.1",
+    "@stellar/stellar-sdk": "^17.2.1",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "xlm-token": "file:packages/xlm-token"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "patch-package": "^8.0.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

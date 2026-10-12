@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* ── Tema ──────────────────────────────────────────────────────────────────
+   Monocromo: superficies negras, tinta blanca y bordes finos. La jerarquía
+   sale del peso, el tamaño y el contraste. El color se usa SOLO para
+   comunicar estado (ok / error / aviso). Pensado para proyectar. */
+:root {
+  --background: #0a0a0a;
+  --surface: #101010;
+  --surface-2: #171717;
+  --hairline: #262626;
+  --hairline-strong: #3a3a3a;
+  --ink: #fafafa;
+  --dim: #a3a3a3;
+  --muted: #737373;
+  --ok: #4ade80;
+  --bad: #f87171;
+  --warn: #fbbf24;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-ink: var(--ink);
+  --color-dim: var(--dim);
+  --color-muted: var(--muted);
+  --color-ok: var(--ok);
+  --color-bad: var(--bad);
+  --color-warn: var(--warn);
+  --font-sans: "Satoshi", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(255 255 255 / 0.16);
+}
+
+/* Etiqueta de sección: MAYÚSCULAS chicas y espaciadas */
+.label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
