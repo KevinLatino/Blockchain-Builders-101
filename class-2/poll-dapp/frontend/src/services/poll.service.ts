@@ -6,7 +6,7 @@
 // un script o un test.
 // ─────────────────────────────────────────────────────────────────────────────
 import { rpc } from "@stellar/stellar-sdk";
-import { explorerTxUrl } from "@/config/stellar";
+import { stellarConfig } from "@/config/stellar";
 import { getPollClient } from "@/lib/contracts/poll.client";
 import { TxError } from "./errors";
 
@@ -93,5 +93,5 @@ export async function vote({ voter, option }: VoteParams, { sign, onStep }: Vote
   if (sent.getTransactionResponse?.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new TxError("failed", "La transacción falló en la red", hash);
   }
-  return { hash, explorerUrl: explorerTxUrl(hash) };
+  return { hash, explorerUrl: `${stellarConfig.explorerUrl}/tx/${hash}` };
 }

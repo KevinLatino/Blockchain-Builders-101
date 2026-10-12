@@ -5,7 +5,7 @@
 // distintos. mapError() los traduce a algo que el usuario entienda y pueda
 // resolver. El detalle técnico se guarda para mostrarlo aparte.
 // ─────────────────────────────────────────────────────────────────────────────
-import { explorerTxUrl } from "@/config/stellar";
+import { stellarConfig } from "@/config/stellar";
 
 export type TxErrorKind =
   | "simulation" // el contrato rechazó la operación al simularla
@@ -43,7 +43,7 @@ export function mapError(error: unknown): FriendlyError {
   const detail = describe(error);
   const has = (pattern: RegExp) => pattern.test(detail);
   const hash = error instanceof TxError ? error.hash : undefined;
-  const explorerUrl = hash ? explorerTxUrl(hash) : undefined;
+  const explorerUrl = hash ? `${stellarConfig.explorerUrl}/tx/${hash}` : undefined;
   const kind = error instanceof TxError ? error.kind : undefined;
   // SEP-43: las wallets usan el código -4 cuando el usuario rechaza.
   const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
