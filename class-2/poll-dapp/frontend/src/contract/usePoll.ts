@@ -35,5 +35,3 @@ export function usePoll() {
 
   return { poll, error, refresh };
 }
-
-export type Poll = ReturnType<typeof usePoll>;

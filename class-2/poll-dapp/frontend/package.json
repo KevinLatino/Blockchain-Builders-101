@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bindings": "stellar contract bindings typescript --network testnet --contract-id poll --output-dir ./packages/poll --overwrite && cd packages/poll && npm pkg set name=poll exports=./src/index.ts typings=./src/index.ts dependencies.@stellar/stellar-sdk=^17.2.1 && npm pkg delete scripts devDependencies",
+    "bindings": "stellar contract bindings typescript --network testnet --contract-id poll --output-dir ./packages/poll --overwrite && cd packages/poll && npm pkg set name=poll exports=./src/index.ts typings=./src/index.ts dependencies.@stellar/stellar-sdk=^17.2.1 && npm pkg delete scripts devDependencies && rm -f README.md tsconfig.json .gitignore",
     "postinstall": "patch-package"
   },
   "dependencies": {

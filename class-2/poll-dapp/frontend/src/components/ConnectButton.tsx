@@ -3,7 +3,7 @@ import type { Wallet } from "@/wallet/useWallet";
 import { Dot, GhostButton, PrimaryButton } from "./ui";
 
 /** GABC…WXYZ */
-export function shortAddress(address: string) {
+function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
