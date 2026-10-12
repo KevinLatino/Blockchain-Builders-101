@@ -1,0 +1,26 @@
+diff --git a/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.js b/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.js
+index 8cfd42b..acc0a54 100644
+--- a/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.js
++++ b/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.js
+@@ -20,7 +20,7 @@ export var ButtonShape = /*#__PURE__*/ function(ButtonShape) {
+   ButtonShape["icon"] = "icon";
+   return ButtonShape;
+ }({});
+-const defaultClasses = "flex items-center justify-center font-semibold easy-in-out transition leading-none";
++const defaultClasses = "flex items-center justify-center font-semibold ease-in-out transition leading-none";
+ export function Button({ size = ButtonSize.md, mode = ButtonMode.primary, shape = ButtonShape.regular, classes, styles, children, onClick }) {
+   const modeStyle = cx({
+     "border-none bg-primary text-primary-foreground shadow-default hover:opacity-70 focus:opacity-90": mode === ButtonMode.primary,
+diff --git a/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.ts b/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.ts
+index 0690299..6004b3b 100644
+--- a/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.ts
++++ b/node_modules/@creit-tech/stellar-wallets-kit/components/shared/button.ts
+@@ -32,7 +32,7 @@ export enum ButtonShape {
+   icon = "icon",
+ }
+ 
+-const defaultClasses = "flex items-center justify-center font-semibold easy-in-out transition leading-none";
++const defaultClasses = "flex items-center justify-center font-semibold ease-in-out transition leading-none";
+ 
+ export function Button(
+   { size = ButtonSize.md, mode = ButtonMode.primary, shape = ButtonShape.regular, classes, styles, children, onClick }:

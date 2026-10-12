@@ -1,0 +1,33 @@
+{
+  "name": "poll-dapp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "bindings": "stellar contract bindings typescript --network testnet --contract-id poll --output-dir ./poll --overwrite && cd poll && npm pkg set name=poll exports=./src/index.ts typings=./src/index.ts dependencies.@stellar/stellar-sdk=^17.2.1 && npm pkg delete scripts devDependencies",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@creit-tech/stellar-wallets-kit": "npm:@jsr/creit-tech__stellar-wallets-kit@^2.7.1",
+    "@stellar/stellar-sdk": "^17.2.1",
+    "next": "16.4.0",
+    "poll": "file:poll",
+    "qrcode.react": "^4.2.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "patch-package": "^8.0.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
