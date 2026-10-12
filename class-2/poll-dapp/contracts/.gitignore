@@ -1,0 +1,3 @@
+# Rust / Soroban
+target/
+test_snapshots/
