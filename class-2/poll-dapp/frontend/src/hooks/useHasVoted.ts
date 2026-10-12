@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { readHasVoted } from "./read";
+import { readHasVoted } from "@/services/poll.service";
 
 /** ¿La cuenta conectada ya votó? (lectura del contrato, sin firma) */
 export function useHasVoted(address: string | null) {

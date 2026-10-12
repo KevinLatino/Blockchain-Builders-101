@@ -2,19 +2,19 @@
 
 Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su wallet y los resultados se actualizan en vivo en la pantalla:
 
-- Un **contrato propio** en Soroban (`contracts/poll`) guarda la pregunta, las opciones y los votos.
+- Un **contrato propio** en Soroban (`contracts/contracts/poll`) guarda la pregunta, las opciones y los votos.
 - La **dApp** (Next.js, en `frontend/`) lee los resultados sin firma y escribe un voto **con firma** de la wallet.
-- **Modo pantalla** (`?modo=pantalla`) con barras grandes y un QR para entrar a votar.
+- **Modo pantalla** (`?modo=pantalla`) con barras grandes, para proyectar.
 
 ## Qué tema de la clase está en cada archivo
 
 | Tema | Archivos |
 |---|---|
-| Smart contract (Soroban) | [`contracts/poll/src/lib.rs`](contracts/poll/src/lib.rs) · [`test.rs`](contracts/poll/src/test.rs) |
-| 1. Arquitectura frontend, backend y Stellar | [`frontend/src/config.ts`](frontend/src/config.ts) · `frontend/.env.local` |
-| 2. Conexión con billetera y flujo de firma | [`frontend/src/wallet/kit.ts`](frontend/src/wallet/kit.ts) · [`sign.ts`](frontend/src/wallet/sign.ts) · [`useWallet.ts`](frontend/src/wallet/useWallet.ts) |
-| 3. Invocar el contrato | [`frontend/src/contract/client.ts`](frontend/src/contract/client.ts) · [`read.ts`](frontend/src/contract/read.ts) · [`write.ts`](frontend/src/contract/write.ts) |
-| 4. Estados de carga, confirmación y error | [`frontend/src/tx/states.ts`](frontend/src/tx/states.ts) · [`errors.ts`](frontend/src/tx/errors.ts) |
+| Smart contract (Soroban) | [`contracts/contracts/poll/src/lib.rs`](contracts/contracts/poll/src/lib.rs) · [`test.rs`](contracts/contracts/poll/src/test.rs) |
+| 1. Arquitectura frontend, backend y Stellar | [`frontend/src/config/stellar.ts`](frontend/src/config/stellar.ts) · `frontend/.env.local` |
+| 2. Conexión con billetera y flujo de firma | [`lib/wallet/kit.ts`](frontend/src/lib/wallet/kit.ts) · [`services/wallet.service.ts`](frontend/src/services/wallet.service.ts) · [`hooks/useWallet.ts`](frontend/src/hooks/useWallet.ts) |
+| 3. Invocar el contrato | [`lib/contracts/poll.client.ts`](frontend/src/lib/contracts/poll.client.ts) · [`services/poll.service.ts`](frontend/src/services/poll.service.ts) (lectura y escritura) |
+| 4. Estados de carga, confirmación y error | [`hooks/useVote.ts`](frontend/src/hooks/useVote.ts) (máquina de estados) · [`services/errors.ts`](frontend/src/services/errors.ts) (`mapError`) |
 | Interfaz | `frontend/src/components/` · [`frontend/src/app/page.tsx`](frontend/src/app/page.tsx) |
 
 ## Arquitectura
@@ -23,11 +23,11 @@ Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su 
 ┌──────────── Navegador del estudiante ────────────┐
 │                                                  │
 │  dApp (Next.js, servida por Vercel)              │       ┌─────────────┐      ┌──────────────┐
-│    ├─ contract/ (bindings) ──────────────────────┼──────▶│  Nodo RPC   │─────▶│  Blockchain  │
+│    ├─ services/poll.service → bindings ──────────┼──────▶│  Nodo RPC   │─────▶│  Blockchain  │
 │    │    leer: get_results  (simulación, gratis)  │ HTTPS │  de Stellar │      │  contrato    │
 │    │    escribir: vote     (transacción firmada) │       │  (Testnet)  │      │  poll        │
-│    └─ wallet/ ──▶ Freighter: firma con la clave  │       └─────────────┘      └──────────────┘
-│                   privada (nunca sale de ahí)    │
+│    └─ services/wallet.service ─▶ Freighter: firma│       └─────────────┘      └──────────────┘
+│         con la clave privada (nunca sale de ahí) │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -37,6 +37,45 @@ Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su 
 - **Indexar eventos o historial:** el contrato emite un evento `Voted` por cada voto. El RPC guarda eventos solo unos días; un backend puede guardarlos en una base de datos (por ejemplo, para mostrar "quién votó cuándo").
 - **Patrocinar fees:** que la app pague las comisiones de los votantes con una cuenta propia, cuya clave tiene que quedar en el servidor.
 - **Guardar datos off-chain:** perfiles, encuestas pasadas, metadata que no conviene poner en la blockchain.
+
+### Capas del frontend
+
+Cada capa tiene **una sola responsabilidad** y solo conoce a las de abajo. Las dependencias siempre apuntan hacia abajo:
+
+```text
+app/page.tsx            Composición    → monta la dApp
+components/             Presentación   → cómo se ve cada estado
+hooks/                  Estado React   → convierte promesas en estado
+services/               Lógica         → reglas de cada llamada y errores, sin React
+lib/                    Acceso         → cliente del contrato, setup del wallet kit
+config/stellar.ts       Configuración  → red, RPC, contract ID
+packages/poll           Bindings       → cliente generado por la Stellar CLI
+```
+
+| Capa | Sabe de… | No sabe de… |
+|---|---|---|
+| **Página** | Qué componente montar | Contratos, estado, RPC |
+| **Componentes** | Cómo se ve cada estado | Cómo se obtiene el dato |
+| **Hooks** | React (estado, efectos) | RPC, bindings, wallet kit |
+| **Servicios** | Leer, votar, conectar y firmar, traducir errores | React |
+| **`lib/`** | Cómo crear el cliente y cargar el kit | Qué se hace con el resultado |
+| **Config** | Red, RPC y contract ID | Todo lo demás |
+
+Así, cambiar de red solo toca `config/`, cambiar la interfaz no toca la lógica, y los servicios son TypeScript puro: se pueden usar desde un script o un test. Los dos servicios no se conocen entre sí: `vote()` recibe la función de firma como parámetro, y es el hook `useVote` el que le pasa la de la wallet.
+
+### El camino de un voto
+
+```text
+VotePanel            el usuario elige una opción y toca "Votar"
+  └▶ useVote         estado = simulando → esperando-firma → enviando → confirmado | error
+       └▶ poll.service.vote()
+            ├▶ poll.client     construye y SIMULA la transacción (bindings → nodo RPC)
+            ├▶ sign()          la función de firma que le pasó el hook (wallet.service → Freighter)
+            └▶ signAndSend()   envía y espera el resultado del ledger
+  ◀─ TxStatus        muestra el paso actual, el hash o el error ya traducido (services/errors.ts)
+```
+
+Leer es el mismo camino sin firma: `PollResults` ← `usePoll` ← `poll.service.readResults()` ← `poll.client` ← nodo RPC.
 
 ## Requisitos
 
@@ -139,7 +178,6 @@ Abre <http://localhost:3000>. El modo pantalla está en <http://localhost:3000/?
 | `NEXT_PUBLIC_STELLAR_RPC_URL` | `https://soroban-testnet.stellar.org` |
 | `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE` | `Test SDF Network ; September 2015` |
 | `NEXT_PUBLIC_CONTRACT_ID` | El ID que imprimió el deploy (`stellar contract alias show poll --network testnet`) |
-| `NEXT_PUBLIC_APP_URL` | *(Opcional)* URL que muestra el QR. Si no está, usa la URL actual. |
 
 Llevan el prefijo `NEXT_PUBLIC_` porque se leen en el navegador, y Next las **inserta al compilar**: si cambias alguna, hay que reiniciar `npm run dev` (o volver a desplegar en Vercel).
 
@@ -157,12 +195,10 @@ El público entra desde su laptop a la URL de Vercel (HTTPS), así que no hace f
 
 Vercel instala desde el registry de JSR gracias al `.npmrc` de `frontend/`, y el `postinstall` aplica el parche. Verificamos el proceso con una instalación limpia (`npm ci` + `npm run build`), igual a la de Vercel.
 
-El QR del modo pantalla toma solo la URL del deploy (`https://…vercel.app`). Si usas un dominio propio, ponlo en `NEXT_PUBLIC_APP_URL`.
-
 ## 5. Durante la clase
 
-1. Proyecta **`https://<tu-app>.vercel.app/?modo=pantalla`**: pregunta, barras y el QR para entrar.
-2. Los estudiantes escanean el QR o escriben la URL, conectan **Freighter en Testnet** y votan.
+1. Proyecta **`https://<tu-app>.vercel.app/?modo=pantalla`**: pregunta y barras en grande.
+2. Los estudiantes entran a `https://<tu-app>.vercel.app`, conectan **Freighter en Testnet** y votan.
 3. Las barras se actualizan solas cada 5 segundos (leer es gratis: no hay firma).
 
 ### Que cada estudiante tenga fondos
@@ -196,42 +232,50 @@ Para votar, la cuenta tiene que existir en Testnet. Si no tiene fondos, la app m
 ## Estructura del código
 
 ```text
-contracts/               → workspace de Rust: solo el contrato
-  poll/src/
-    lib.rs               → contrato: constructor, vote, get_results, get_question, get_options, has_voted
-    test.rs              → tests (cargo test)
-frontend/                → dApp (Next.js)
+contracts/                    → workspace de Rust: solo contratos
+  contracts/
+    poll/src/
+      lib.rs                  → contrato: constructor, vote, get_results, get_question, get_options, has_voted
+      test.rs                 → tests (cargo test)
+frontend/                     → dApp (Next.js)
   packages/
-    poll/                → cliente TypeScript generado (npm run bindings)
+    poll/                     → cliente TypeScript generado (npm run bindings)
   src/
     app/
-      layout.tsx         → HTML base, fuente, metadata
-      page.tsx           → arma la página: vista normal o ?modo=pantalla
-    config.ts            → 1. Arquitectura: red, RPC, contract ID
-    wallet/
-      kit.ts             → 2. Setup de Stellar Wallets Kit (solo en el navegador)
-      sign.ts            → 2. Flujo de firma
-      useWallet.ts       → 2. Hook: dirección conectada y red
-      friendbot.ts       → fondear cuentas de Testnet
-    contract/
-      client.ts          → 3. Cliente generado con bindings
-      read.ts            → 3. Lectura: get_results, get_question, get_options, has_voted
-      write.ts           → 3. Escritura: client.vote() + tx.signAndSend()
-      usePoll.ts         → resultados en vivo (cada 5 s)
-      useHasVoted.ts     → ¿la cuenta ya votó?
-    tx/
-      states.ts          → 4. Máquina de estados
-      errors.ts          → 4. mapError()
-      useVote.ts         → ejecuta el voto y expone su estado
-    components/          → ConnectButton, NetworkBanner, VotePanel, PollResults,
-                           TxStatus, ScreenView, JoinQR
+      layout.tsx              → HTML base, fuente, metadata
+      page.tsx                → monta <PollApp />
+    components/
+      poll/                   → PollApp (elige la vista), VoteView, ScreenView,
+                                VotePanel, PollResults, TxStatus
+      wallet/                 → ConnectButton, NetworkBanner
+      ui/                     → botones y piezas visuales compartidas
+    hooks/
+      useWallet.ts            → 2. dirección conectada y red
+      usePoll.ts              → resultados en vivo (cada 5 s)
+      useHasVoted.ts          → ¿la cuenta ya votó?
+      useVote.ts              → 4. Máquina de estados del voto
+    services/
+      poll.service.ts         → 3. Lectura (get_results, get_question, get_options, has_voted)
+                                   y escritura (client.vote() + tx.signAndSend())
+      wallet.service.ts       → 2. conectar, restaurar sesión, red de la wallet, firma, Friendbot
+      errors.ts               → 4. mapError(): de error técnico a mensaje humano
+    lib/
+      contracts/
+        poll.client.ts        → 3. Cliente generado con bindings
+      wallet/
+        kit.ts                → 2. Setup de Stellar Wallets Kit (solo en el navegador)
+    config/
+      stellar.ts              → 1. Arquitectura: red, RPC, contract ID
 ```
+
+**Orden de lectura recomendado**, siguiendo el camino de los datos de la blockchain a la pantalla: `packages/poll/src/index.ts` → `config/stellar.ts` → `lib/contracts/poll.client.ts` → `services/poll.service.ts` → `services/wallet.service.ts` → `services/errors.ts` → `hooks/` → `components/` → `app/page.tsx`.
 
 ## Notas técnicas
 
 - **Stellar Wallets Kit desde JSR** (`@creit-tech/stellar-wallets-kit`). No usamos `defaultModules()`: en la versión de JSR incluye el módulo de MetaMask, que importa el kit con su nombre viejo de npm (`@creit.tech/...`) y rompe el build. Por eso importamos las wallets una por una (Freighter, xBull, Lobstr, Albedo, Hana).
-- **`signAndSend()` no lanza un error si la transacción falla en la red**: `write.ts` revisa el estado final (`SUCCESS`) y, si no, muestra el error con el hash.
-- **Errores antes de firmar:** `write.ts` revisa la simulación antes de pedir la firma. Así "Ya votaste" y "Esa opción no existe" aparecen sin abrir la wallet ni gastar nada.
+- **`signAndSend()` no lanza un error si la transacción falla en la red**: `services/poll.service.ts` revisa el estado final (`SUCCESS`) y, si no, lanza un error con el hash para mostrar el link al explorador.
+- **Red de la wallet:** `signWithWallet()` (en `services/wallet.service.ts`) compara la red de la wallet con la de la app justo antes de firmar, porque una firma de otra red no sirve en Testnet.
+- **Errores antes de firmar:** `services/poll.service.ts` revisa la simulación antes de pedir la firma. Así "Ya votaste" y "Esa opción no existe" aparecen sin abrir la wallet ni gastar nada.
 
 ## Scripts
 

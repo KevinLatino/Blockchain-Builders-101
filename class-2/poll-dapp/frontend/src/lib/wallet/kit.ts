@@ -6,7 +6,7 @@
 // wallet que firme. Las claves no salen de la wallet.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit/sdk";
-import { config } from "@/config";
+import { stellarConfig } from "@/config/stellar";
 
 type Kit = typeof StellarWalletsKit;
 let kitPromise: Promise<Kit> | null = null;
@@ -47,7 +47,7 @@ export function loadKit(): Promise<Kit> {
         new AlbedoModule(),
         new HanaModule(),
       ],
-      network: config.networkPassphrase as never, // Testnet
+      network: stellarConfig.networkPassphrase as never, // Testnet
       theme: {
         ...SwkAppDarkTheme, // mismo look monocromo que la app
         background: "#101010",
@@ -65,39 +65,3 @@ export function loadKit(): Promise<Kit> {
   return kitPromise;
 }
 
-/** Abre el selector de wallets y devuelve la dirección elegida. */
-export async function connectWallet(): Promise<string> {
-  const kit = await loadKit();
-  const { address } = await kit.authModal();
-  return address;
-}
-
-/** Recupera la sesión guardada (el kit la persiste en localStorage). */
-export async function restoreWallet(): Promise<string | null> {
-  const kit = await loadKit();
-  try {
-    const { address } = await kit.getAddress();
-    return address;
-  } catch {
-    return null; // nunca se conectó o se desconectó
-  }
-}
-
-export async function disconnectWallet(): Promise<void> {
-  const kit = await loadKit();
-  await kit.disconnect();
-}
-
-/**
- * Pregunta a la wallet en qué red está. Devuelve `null` si la wallet
- * no lo informa (xBull, Lobstr, Albedo… no soportan esta consulta).
- */
-export async function getWalletNetwork(): Promise<string | null> {
-  const kit = await loadKit();
-  try {
-    const { networkPassphrase } = await kit.getNetwork();
-    return networkPassphrase;
-  } catch {
-    return null;
-  }
-}

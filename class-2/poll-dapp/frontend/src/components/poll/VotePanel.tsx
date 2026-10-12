@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import type { PollData } from "@/contract/read";
-import type { VoteParams } from "@/contract/write";
-import { isBusy, type TxState } from "@/tx/states";
+import { PrimaryButton } from "@/components/ui";
+import { isBusy, type TxState } from "@/hooks/useVote";
+import type { PollData } from "@/services/poll.service";
+import type { VoteParams } from "@/services/poll.service";
 import { LiveBadge, PollResults } from "./PollResults";
-import { PrimaryButton } from "./ui";
 
 type Props = {
   poll: PollData;

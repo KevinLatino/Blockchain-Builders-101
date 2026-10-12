@@ -7,18 +7,27 @@
 // (vote, get_results, get_question, get_options, has_voted): no armamos las llamadas a mano.
 // ─────────────────────────────────────────────────────────────────────────────
 import { Client } from "poll";
-import { config } from "@/config";
+import { stellarConfig } from "@/config/stellar";
+
+let readClient: Client | null = null;
 
 /**
- * Crea el cliente del contrato.
- * - Sin `publicKey`: alcanza para LEER (simular no necesita cuenta).
+ * Devuelve el cliente del contrato.
+ * - Sin `publicKey`: alcanza para LEER (simular no necesita cuenta). No guarda
+ *   estado por usuario, así que se crea una sola vez y se reutiliza.
  * - Con `publicKey`: la cuenta que va a pagar y firmar una ESCRITURA.
  */
-export function getPollClient(publicKey?: string) {
+export function getPollClient(publicKey?: string): Client {
+  if (publicKey) return createClient(publicKey);
+  readClient ??= createClient();
+  return readClient;
+}
+
+function createClient(publicKey?: string): Client {
   return new Client({
-    contractId: config.contractId,
-    networkPassphrase: config.networkPassphrase,
-    rpcUrl: config.rpcUrl,
+    contractId: stellarConfig.contractId,
+    networkPassphrase: stellarConfig.networkPassphrase,
+    rpcUrl: stellarConfig.rpcUrl,
     publicKey,
   });
 }

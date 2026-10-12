@@ -1,5 +1,5 @@
 "use client";
-import type { PollData } from "@/contract/read";
+import type { PollData } from "@/services/poll.service";
 
 type Props = {
   poll: PollData;
