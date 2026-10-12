@@ -5,7 +5,7 @@
 // errores salen. No sabe nada de React, así que se puede usar desde un hook,
 // un script o un test.
 // ─────────────────────────────────────────────────────────────────────────────
-import { rpc } from "@stellar/stellar-sdk";
+import { rpc } from "@stellar/stellar-sdk"; //manejar pruebas de la red, antes de enviar la transaccion.
 import { stellarConfig } from "@/config/stellar";
 import { getPollClient } from "@/lib/contracts/poll.client";
 import { TxError } from "./errors";
@@ -15,19 +15,20 @@ import { TxError } from "./errors";
 // (ejecuta el contrato "en seco", sin guardar nada en la blockchain)
 // y nos devuelve el resultado. Por eso podemos consultar cada 5 segundos.
 
+//Molde de como debe de verse la información de la votación.
 export type PollData = {
   question: string;
   options: string[];
   results: number[]; // votos de cada opción, en el mismo orden que `options`
 };
 
-/** Votos de cada opción. Es lo que refrescamos en vivo. */
+//Muestra los resultados de la votación, usa el cliente generado, solo lectura, no modifica la blockchain.
 export async function readResults(): Promise<number[]> {
-  const tx = await getPollClient().get_results(); // construye y SIMULA
-  return tx.result; // Vec<u32> del contrato → number[] en TypeScript
+  const tx = await getPollClient().get_results();
+  return tx.result;
 }
 
-/** Pregunta + opciones + resultados (las tres lecturas en paralelo). */
+// Junta la información de la votación de una vez.
 export async function readPoll(): Promise<PollData> {
   const client = getPollClient();
   const [question, options, results] = await Promise.all([
@@ -58,8 +59,8 @@ export type VoteStep = "simulando" | "esperando-firma" | "enviando";
 
 /** Quién firma: el servicio no conoce la wallet, recibe la función (ver wallet.service.ts). */
 export type SignTransaction = (
-  xdr: string,
-  address: string,
+  xdr: string, //XDR es el formato de la transaccion estandarizado de Stellar, se usa para firmar la transaccion.
+  address: string, //direccion de la cuenta que va a firmar la transaccion.
 ) => Promise<{ signedTxXdr: string; signerAddress?: string }>;
 
 export type VoteOptions = {
