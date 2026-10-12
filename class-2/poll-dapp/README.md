@@ -3,7 +3,7 @@
 Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su wallet y los resultados se actualizan en vivo en la pantalla:
 
 - Un **contrato propio** en Soroban (`contracts/poll`) guarda la pregunta, las opciones y los votos.
-- La **dApp** (Next.js) lee los resultados sin firma y escribe un voto **con firma** de la wallet.
+- La **dApp** (Next.js, en `frontend/`) lee los resultados sin firma y escribe un voto **con firma** de la wallet.
 - **Modo pantalla** (`?modo=pantalla`) con barras grandes y un QR para entrar a votar.
 
 ## Qué tema de la clase está en cada archivo
@@ -11,11 +11,11 @@ Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su 
 | Tema | Archivos |
 |---|---|
 | Smart contract (Soroban) | [`contracts/poll/src/lib.rs`](contracts/poll/src/lib.rs) · [`test.rs`](contracts/poll/src/test.rs) |
-| 1. Arquitectura frontend, backend y Stellar | [`src/config.ts`](src/config.ts) · `.env.local` |
-| 2. Conexión con billetera y flujo de firma | [`src/wallet/kit.ts`](src/wallet/kit.ts) · [`sign.ts`](src/wallet/sign.ts) · [`useWallet.ts`](src/wallet/useWallet.ts) |
-| 3. Invocar el contrato | [`src/contract/client.ts`](src/contract/client.ts) · [`read.ts`](src/contract/read.ts) · [`write.ts`](src/contract/write.ts) |
-| 4. Estados de carga, confirmación y error | [`src/tx/states.ts`](src/tx/states.ts) · [`errors.ts`](src/tx/errors.ts) |
-| Interfaz | `src/components/` · [`src/app/page.tsx`](src/app/page.tsx) |
+| 1. Arquitectura frontend, backend y Stellar | [`frontend/src/config.ts`](frontend/src/config.ts) · `frontend/.env.local` |
+| 2. Conexión con billetera y flujo de firma | [`frontend/src/wallet/kit.ts`](frontend/src/wallet/kit.ts) · [`sign.ts`](frontend/src/wallet/sign.ts) · [`useWallet.ts`](frontend/src/wallet/useWallet.ts) |
+| 3. Invocar el contrato | [`frontend/src/contract/client.ts`](frontend/src/contract/client.ts) · [`read.ts`](frontend/src/contract/read.ts) · [`write.ts`](frontend/src/contract/write.ts) |
+| 4. Estados de carga, confirmación y error | [`frontend/src/tx/states.ts`](frontend/src/tx/states.ts) · [`errors.ts`](frontend/src/tx/errors.ts) |
+| Interfaz | `frontend/src/components/` · [`frontend/src/app/page.tsx`](frontend/src/app/page.tsx) |
 
 ## Arquitectura
 
@@ -46,7 +46,7 @@ Demo para la **Sesión 7: Integración de interfaz**. El público vota desde su 
 
 ## 1. El contrato
 
-Todos los comandos se corren desde `class-2/poll-dapp`.
+Los comandos de esta sección se corren desde `class-2/poll-dapp/contracts`.
 
 **Tests:**
 
@@ -97,7 +97,7 @@ stellar keys generate alice --network testnet --fund
 
 ## 2. Generar los bindings
 
-El cliente del contrato (`./poll`) no se escribe a mano: lo genera la Stellar CLI a partir del contrato desplegado.
+El cliente del contrato (`frontend/packages/poll`) no se escribe a mano: lo genera la Stellar CLI a partir del contrato desplegado. Desde `class-2/poll-dapp/frontend`:
 
 ```bash
 npm run bindings
@@ -106,7 +106,7 @@ npm run bindings
 Que corre:
 
 ```bash
-stellar contract bindings typescript --network testnet --contract-id poll --output-dir ./poll --overwrite
+stellar contract bindings typescript --network testnet --contract-id poll --output-dir ./packages/poll --overwrite
 ```
 
 y además ajusta el `package.json` generado: lo apunta al código TypeScript (Next lo compila con `transpilePackages`) y alinea la versión de `@stellar/stellar-sdk` con la de la app, para que haya **una sola copia** del SDK. Después ejecuta `npm install`.
@@ -114,6 +114,8 @@ y además ajusta el `package.json` generado: lo apunta al código TypeScript (Ne
 Solo hace falta regenerarlos si **cambia la interfaz** del contrato (funciones, argumentos, errores). Si despliegas el mismo contrato de nuevo, alcanza con cambiar `NEXT_PUBLIC_CONTRACT_ID`.
 
 ## 3. Correr en local
+
+Desde `class-2/poll-dapp/frontend`:
 
 ```bash
 cp .env.example .env.local
@@ -141,19 +143,19 @@ Abre <http://localhost:3000>. El modo pantalla está en <http://localhost:3000/?
 
 Llevan el prefijo `NEXT_PUBLIC_` porque se leen en el navegador, y Next las **inserta al compilar**: si cambias alguna, hay que reiniciar `npm run dev` (o volver a desplegar en Vercel).
 
-`npm install` también aplica un parche chico a Stellar Wallets Kit (`patches/`) que corrige un typo de CSS de la librería.
+`npm install` también aplica un parche chico a Stellar Wallets Kit (`frontend/patches/`) que corrige un typo de CSS de la librería.
 
 ## 4. Publicar en Vercel
 
 El público entra desde su laptop a la URL de Vercel (HTTPS), así que no hace falta estar en la misma red.
 
 1. En [vercel.com/new](https://vercel.com/new), importa el repositorio.
-2. **Root Directory:** `class-2/poll-dapp` (el repo tiene más carpetas).
+2. **Root Directory:** `class-2/poll-dapp/frontend` (el repo tiene más carpetas).
 3. **Framework:** Next.js (se detecta solo). No hace falta tocar los comandos de build.
 4. **Environment Variables:** carga las 4 variables `NEXT_PUBLIC_*` de la tabla de arriba.
 5. **Deploy.**
 
-Vercel instala desde el registry de JSR gracias al `.npmrc` del proyecto, y el `postinstall` aplica el parche. Verificamos el proceso con una instalación limpia (`npm ci` + `npm run build`), igual a la de Vercel.
+Vercel instala desde el registry de JSR gracias al `.npmrc` de `frontend/`, y el `postinstall` aplica el parche. Verificamos el proceso con una instalación limpia (`npm ci` + `npm run build`), igual a la de Vercel.
 
 El QR del modo pantalla toma solo la URL del deploy (`https://…vercel.app`). Si usas un dominio propio, ponlo en `NEXT_PUBLIC_APP_URL`.
 
@@ -194,31 +196,34 @@ Para votar, la cuenta tiene que existir en Testnet. Si no tiene fondos, la app m
 ## Estructura del código
 
 ```text
-contracts/poll/src/
-  lib.rs                 → contrato: constructor, vote, get_results, get_question, get_options, has_voted
-  test.rs                → tests (cargo test)
-poll/                    → cliente TypeScript generado (npm run bindings)
-src/
-  app/
-    layout.tsx           → HTML base, fuente, metadata
-    page.tsx             → arma la página: vista normal o ?modo=pantalla
-  config.ts              → 1. Arquitectura: red, RPC, contract ID
-  wallet/
-    kit.ts               → 2. Setup de Stellar Wallets Kit (solo en el navegador)
-    sign.ts              → 2. Flujo de firma
-    useWallet.ts         → 2. Hook: dirección conectada y red
-    friendbot.ts         → fondear cuentas de Testnet
-  contract/
-    client.ts            → 3. Cliente generado con bindings
-    read.ts              → 3. Lectura: get_results, get_question, get_options, has_voted
-    write.ts             → 3. Escritura: client.vote() + tx.signAndSend()
-    usePoll.ts           → resultados en vivo (cada 5 s)
-    useHasVoted.ts       → ¿la cuenta ya votó?
-  tx/
-    states.ts            → 4. Máquina de estados
-    errors.ts            → 4. mapError()
-    useVote.ts           → ejecuta el voto y expone su estado
-  components/            → ConnectButton, NetworkBanner, VotePanel, PollResults,
+contracts/               → workspace de Rust: solo el contrato
+  poll/src/
+    lib.rs               → contrato: constructor, vote, get_results, get_question, get_options, has_voted
+    test.rs              → tests (cargo test)
+frontend/                → dApp (Next.js)
+  packages/
+    poll/                → cliente TypeScript generado (npm run bindings)
+  src/
+    app/
+      layout.tsx         → HTML base, fuente, metadata
+      page.tsx           → arma la página: vista normal o ?modo=pantalla
+    config.ts            → 1. Arquitectura: red, RPC, contract ID
+    wallet/
+      kit.ts             → 2. Setup de Stellar Wallets Kit (solo en el navegador)
+      sign.ts            → 2. Flujo de firma
+      useWallet.ts       → 2. Hook: dirección conectada y red
+      friendbot.ts       → fondear cuentas de Testnet
+    contract/
+      client.ts          → 3. Cliente generado con bindings
+      read.ts            → 3. Lectura: get_results, get_question, get_options, has_voted
+      write.ts           → 3. Escritura: client.vote() + tx.signAndSend()
+      usePoll.ts         → resultados en vivo (cada 5 s)
+      useHasVoted.ts     → ¿la cuenta ya votó?
+    tx/
+      states.ts          → 4. Máquina de estados
+      errors.ts          → 4. mapError()
+      useVote.ts         → ejecuta el voto y expone su estado
+    components/          → ConnectButton, NetworkBanner, VotePanel, PollResults,
                            TxStatus, ScreenView, JoinQR
 ```
 
@@ -229,6 +234,8 @@ src/
 - **Errores antes de firmar:** `write.ts` revisa la simulación antes de pedir la firma. Así "Ya votaste" y "Esa opción no existe" aparecen sin abrir la wallet ni gastar nada.
 
 ## Scripts
+
+Los `npm run …` van en `frontend/`; `cargo` y `stellar contract build`, en `contracts/`.
 
 | Comando | Qué hace |
 |---|---|
