@@ -6,23 +6,17 @@
 // wallet está en la red correcta.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useState } from "react";
-import { config } from "@/config";
 import {
   connectWallet,
   disconnectWallet,
-  getWalletNetwork,
+  fundWithFriendbot,
+  getWalletNetworkStatus,
   restoreWallet,
-} from "./kit";
+  type WalletNetworkStatus,
+} from "@/services/wallet.service";
 
-/** ok = Testnet · wrong = otra red (bloqueamos) · unknown = la wallet no lo informa */
-export type NetworkStatus = "checking" | "ok" | "wrong" | "unknown";
-
-/** Compara la red de la wallet con la de la app (config.ts). */
-async function readNetworkStatus(): Promise<NetworkStatus> {
-  const passphrase = await getWalletNetwork();
-  if (passphrase === null) return "unknown";
-  return passphrase === config.networkPassphrase ? "ok" : "wrong";
-}
+/** checking = todavía no le preguntamos a la wallet */
+export type NetworkStatus = "checking" | WalletNetworkStatus;
 
 export function useWallet() {
   const [address, setAddress] = useState<string | null>(null);
@@ -41,7 +35,7 @@ export function useWallet() {
   // pestaña (el usuario pudo haber cambiado de red en su wallet).
   useEffect(() => {
     if (!address) return;
-    const check = () => readNetworkStatus().then(setNetwork);
+    const check = () => getWalletNetworkStatus().then(setNetwork);
     check();
     window.addEventListener("focus", check);
     return () => window.removeEventListener("focus", check);
@@ -61,7 +55,12 @@ export function useWallet() {
     setNetwork("checking");
   }, []);
 
-  return { address, network, ready, connect, disconnect };
+  /** Fondea la cuenta conectada con Friendbot (solo Testnet). */
+  const fund = useCallback(async () => {
+    if (address) await fundWithFriendbot(address);
+  }, [address]);
+
+  return { address, network, ready, connect, disconnect, fund };
 }
 
 export type Wallet = ReturnType<typeof useWallet>;

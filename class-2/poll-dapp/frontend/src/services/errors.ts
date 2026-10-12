@@ -5,6 +5,7 @@
 // distintos. mapError() los traduce a algo que el usuario entienda y pueda
 // resolver. El detalle técnico se guarda para mostrarlo aparte.
 // ─────────────────────────────────────────────────────────────────────────────
+import { explorerTxUrl } from "@/config/stellar";
 
 export type TxErrorKind =
   | "simulation" // el contrato rechazó la operación al simularla
@@ -27,7 +28,7 @@ export type FriendlyError = {
   title: string;
   message: string;
   action?: "retry" | "friendbot" | "results"; // botón que ofrecemos para resolverlo
-  hash?: string;
+  explorerUrl?: string; // si ya fue enviada, para verla en el explorador
   detail: string; // texto técnico original
 };
 
@@ -42,6 +43,7 @@ export function mapError(error: unknown): FriendlyError {
   const detail = describe(error);
   const has = (pattern: RegExp) => pattern.test(detail);
   const hash = error instanceof TxError ? error.hash : undefined;
+  const explorerUrl = hash ? explorerTxUrl(hash) : undefined;
   const kind = error instanceof TxError ? error.kind : undefined;
   // SEP-43: las wallets usan el código -4 cuando el usuario rechaza.
   const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
@@ -52,7 +54,7 @@ export function mapError(error: unknown): FriendlyError {
   if (has(/Account not found|account entry is missing/i))
     return { title: "Cuenta sin fondos", message: "Tu cuenta todavía no tiene fondos.", action: "friendbot", detail };
 
-  // Errores del contrato: los números son los de PollError en contracts/poll.
+  // Errores del contrato: los números son los de PollError en contracts/contracts/poll (packages/poll los exporta como PollError).
   if (has(/Error\(Contract, #2\)/))
     return { title: "Ya votaste", message: "Ya votaste en esta encuesta.", action: "results", detail };
 
@@ -66,10 +68,10 @@ export function mapError(error: unknown): FriendlyError {
     return { title: "El contrato rechazó el voto", message: "La simulación falló, así que no se pidió ninguna firma ni se gastó nada.", detail };
 
   if (kind === "timeout" || has(/timeout|timed out|Waited \d+ seconds|Failed to fetch|Network Error|ECONN|50[234]/i))
-    return { title: "La red no respondió", message: "El nodo RPC tardó demasiado o no está disponible. Prueba de nuevo en unos segundos.", action: "retry", hash, detail };
+    return { title: "La red no respondió", message: "El nodo RPC tardó demasiado o no está disponible. Prueba de nuevo en unos segundos.", action: "retry", explorerUrl, detail };
 
   if (kind === "failed" || kind === "rejected")
-    return { title: "La red rechazó la transacción", message: "La transacción no se pudo ejecutar.", action: "retry", hash, detail };
+    return { title: "La red rechazó la transacción", message: "La transacción no se pudo ejecutar.", action: "retry", explorerUrl, detail };
 
   return { title: "Algo salió mal", message: "Ocurrió un error inesperado.", action: "retry", detail };
 }

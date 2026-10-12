@@ -1,6 +1,6 @@
 "use client";
-import type { Wallet } from "@/wallet/useWallet";
-import { Dot, GhostButton, PrimaryButton } from "./ui";
+import type { Wallet } from "@/hooks/useWallet";
+import { Dot, GhostButton, PrimaryButton } from "@/components/ui";
 
 /** GABC…WXYZ */
 function shortAddress(address: string) {

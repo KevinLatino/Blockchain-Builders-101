@@ -15,20 +15,29 @@ const env = {
   NEXT_PUBLIC_CONTRACT_ID: process.env.NEXT_PUBLIC_CONTRACT_ID,
 };
 
+// Si falta una variable, mejor fallar al compilar con un mensaje claro.
+for (const [name, value] of Object.entries(env)) {
+  if (!value) {
+    throw new Error(`Falta ${name}: agrégala en .env.local (local) o en Environment Variables (Vercel)`);
+  }
+}
 
-export const config = {
+export const stellarConfig = Object.freeze({
   /** Nombre de la red: "testnet" */
   network: env.NEXT_PUBLIC_STELLAR_NETWORK!,
   /** Nodo RPC: el "puente" HTTP entre la app y la blockchain */
   rpcUrl: env.NEXT_PUBLIC_STELLAR_RPC_URL!,
   /** Identifica la red al firmar: una firma de Testnet no sirve en Mainnet */
   networkPassphrase: env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE!,
-  /** Contrato de votación (contracts/poll) */
+  /** Contrato de votación (contracts/contracts/poll) */
   contractId: env.NEXT_PUBLIC_CONTRACT_ID!,
   /** Explorador para ver transacciones */
   explorerUrl: `https://stellar.expert/explorer/${env.NEXT_PUBLIC_STELLAR_NETWORK}`,
-  /** URL pública para el QR (opcional: si no está, se usa la URL actual) */
-  appUrl: process.env.NEXT_PUBLIC_APP_URL || null,
   /** Friendbot: regala XLM de prueba (solo existe en Testnet) */
   friendbotUrl: "https://friendbot.stellar.org",
-};
+});
+
+/** Link a una transacción en el explorador. */
+export function explorerTxUrl(hash: string): string {
+  return `${stellarConfig.explorerUrl}/tx/${hash}`;
+}

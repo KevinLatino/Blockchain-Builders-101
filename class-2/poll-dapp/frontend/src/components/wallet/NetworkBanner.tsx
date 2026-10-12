@@ -1,7 +1,7 @@
 "use client";
-import { config } from "@/config";
-import type { NetworkStatus } from "@/wallet/useWallet";
-import { Dot } from "./ui";
+import { stellarConfig } from "@/config/stellar";
+import type { NetworkStatus } from "@/hooks/useWallet";
+import { Dot } from "@/components/ui";
 
 export function NetworkBanner({ network }: { network: NetworkStatus }) {
   if (network !== "wrong" && network !== "unknown") return null;
@@ -16,7 +16,7 @@ export function NetworkBanner({ network }: { network: NetworkStatus }) {
         ) : (
           <>Tu wallet no informa en qué red está. Asegúrate de que esté en </>
         )}
-        <b className="font-mono text-ink uppercase">{config.network}</b>
+        <b className="font-mono text-ink uppercase">{stellarConfig.network}</b>
         {wrong ? " para poder operar." : "."}
       </p>
     </div>

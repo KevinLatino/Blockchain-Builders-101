@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { config } from "@/config";
-import { mapError } from "@/tx/errors";
-import { STEP_TEXT, type TxState, type TxStep } from "@/tx/states";
-import { GhostButton, PrimaryButton } from "./ui";
+import { GhostButton, PrimaryButton } from "@/components/ui";
+import type { TxState } from "@/hooks/useVote";
+import type { FriendlyError } from "@/services/errors";
+import type { VoteStep } from "@/services/poll.service";
 
 type Props = {
   state: TxState;
@@ -14,11 +14,11 @@ type Props = {
 };
 
 // Las líneas del log, en orden. Cada una explica qué pasa en ese paso.
-const LINES: { step: TxStep | "confirmado"; text: string; detail: string }[] = [
-  { step: "simulando", text: STEP_TEXT.simulando, detail: "construir + simular" },
-  { step: "esperando-firma", text: STEP_TEXT["esperando-firma"], detail: "la wallet firma" },
-  { step: "enviando", text: STEP_TEXT.enviando, detail: "enviar + esperar ledger" },
-  { step: "confirmado", text: "✓ Voto registrado", detail: "incluido en la blockchain" },
+const LINES: { step: VoteStep | "confirmado"; text: string; detail: string }[] = [
+  { step: "simulando", text: "Preparando…", detail: "construir + simular" },
+  { step: "esperando-firma", text: "Esperando firma…", detail: "la wallet firma" },
+  { step: "enviando", text: "Enviando…", detail: "enviar + esperar ledger" },
+  { step: "confirmado", text: "Voto registrado", detail: "incluido en la blockchain" },
 ];
 
 /** Hasta qué línea llegamos y si esa línea falló. */
@@ -58,7 +58,7 @@ export function TxStatus({ state, onReset, onRetry, onFund, onShowResults }: Pro
                 {error && <span className="text-bad">✗</span>}
                 {!done && !active && !error && "·"}
               </span>
-              <span className={error ? "text-bad" : ""}>{line.text.replace("✓ ", "")}</span>
+              <span className={error ? "text-bad" : ""}>{line.text}</span>
               <span className="ml-auto text-xs text-muted">{line.detail}</span>
             </li>
           );
@@ -70,7 +70,7 @@ export function TxStatus({ state, onReset, onRetry, onFund, onShowResults }: Pro
           <p className="text-lg font-bold text-ok">✓ Voto registrado</p>
           <div>
             <span className="label">Hash de la transacción</span>
-            <a href={`${config.explorerUrl}/tx/${state.hash}`} target="_blank" rel="noreferrer" className="mt-1 block break-all font-mono text-sm text-ink underline decoration-hairline-strong underline-offset-4 hover:decoration-ink">
+            <a href={state.explorerUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all font-mono text-sm text-ink underline decoration-hairline-strong underline-offset-4 hover:decoration-ink">
               {state.hash} ↗
             </a>
           </div>
@@ -100,7 +100,7 @@ export function TxStatus({ state, onReset, onRetry, onFund, onShowResults }: Pro
 }
 
 type FooterProps = {
-  error: unknown;
+  error: FriendlyError;
   funding: boolean;
   onReset: () => void;
   onRetry: () => void;
@@ -108,8 +108,7 @@ type FooterProps = {
   onShowResults: () => void;
 };
 
-function ErrorFooter({ error, funding, onReset, onRetry, onFund, onShowResults }: FooterProps) {
-  const friendly = mapError(error);
+function ErrorFooter({ error: friendly, funding, onReset, onRetry, onFund, onShowResults }: FooterProps) {
   return (
     <footer role="alert" className="space-y-3 border-t border-hairline px-4 py-4">
       <div>
@@ -117,8 +116,8 @@ function ErrorFooter({ error, funding, onReset, onRetry, onFund, onShowResults }
         <p className="mt-1 text-sm text-dim">{friendly.message}</p>
       </div>
 
-      {friendly.hash && (
-        <a href={`${config.explorerUrl}/tx/${friendly.hash}`} target="_blank" rel="noreferrer" className="block font-mono text-sm text-dim underline underline-offset-4">
+      {friendly.explorerUrl && (
+        <a href={friendly.explorerUrl} target="_blank" rel="noreferrer" className="block font-mono text-sm text-dim underline underline-offset-4">
           Ver la transacción en el explorador ↗
         </a>
       )}
