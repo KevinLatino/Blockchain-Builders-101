@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Código generado por `stellar contract bindings typescript`.
-    "poll/**",
+    "packages/**",
   ]),
 ]);
 

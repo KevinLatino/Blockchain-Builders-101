@@ -15,12 +15,6 @@ const env = {
   NEXT_PUBLIC_CONTRACT_ID: process.env.NEXT_PUBLIC_CONTRACT_ID,
 };
 
-// Si falta una variable, mejor fallar al compilar con un mensaje claro.
-for (const [name, value] of Object.entries(env)) {
-  if (!value) {
-    throw new Error(`Falta ${name}: agrégala en .env.local (local) o en Environment Variables (Vercel)`);
-  }
-}
 
 export const config = {
   /** Nombre de la red: "testnet" */

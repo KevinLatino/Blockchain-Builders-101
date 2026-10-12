@@ -2,7 +2,7 @@
 // 3. CONTRATO · Cliente generado con bindings
 //
 // `poll` lo generó la Stellar CLI a partir del contrato desplegado:
-//   stellar contract bindings typescript --contract-id poll --network testnet --output-dir ./poll
+//   stellar contract bindings typescript --contract-id poll --network testnet --output-dir ./packages/poll
 // Trae un método tipado por cada función del contrato
 // (vote, get_results, get_question, get_options, has_voted): no armamos las llamadas a mano.
 // ─────────────────────────────────────────────────────────────────────────────
