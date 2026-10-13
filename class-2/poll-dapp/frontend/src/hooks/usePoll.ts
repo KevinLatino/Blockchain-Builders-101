@@ -1,3 +1,5 @@
+//Lee los datos y las muestra.
+
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { mapError, type FriendlyError } from "@/services/errors";
